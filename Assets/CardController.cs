@@ -8,11 +8,12 @@ public class CardController : MonoBehaviour
     public float rotationSpeed;
     public Image hiddenPokemon;
     public bool isShowingPokemon;
-    GameManager gameManager;
+    Animator animator;
+    public string PokemonName;
     void Start()
     {
+        animator = transform.GetComponent<Animator>();
         isShowingPokemon = false;
-        gameManager = FindObjectOfType<GameManager>();
     }
 
     void Update()
@@ -20,60 +21,55 @@ public class CardController : MonoBehaviour
 
     }
 
-    public void RotateCard()
+    public void FlipBack()
     {
-        if (gameManager.selectedCards >= 2)
+        if (StateSelectCard.selectedTwo.Equals(GameManager.GetInstance().stateSelectCard))
             return;
 
-        print("ROTATE CARD");
-        if (!isShowingPokemon)
+        if (StateSelectCard.selectedZero.Equals(GameManager.GetInstance().stateSelectCard)
+            || StateSelectCard.selectedOne.Equals(GameManager.GetInstance().stateSelectCard))
         {
-            gameManager.SelectCard(1);
-            StartCoroutine("StartRotation");
+            animator.SetTrigger("flipBack");
+            GameManager.GetInstance().IncrementSelectedCard(1);
+            GameManager.GetInstance().stateSelectCard = (StateSelectCard)(GameManager.GetInstance().selectedCards);
+            GameManager.GetInstance().SetCardSelected(gameObject);
+            // GameManager.GetInstance().AreSamePokemon();
+            if (StateSelectCard.selectedTwo.Equals(GameManager.GetInstance().stateSelectCard))
+            {
+                print(GameManager.GetInstance().AreSamePokemon());
+                if (GameManager.GetInstance().AreSamePokemon())
+                {
+                    StartCoroutine("DisableCardEquals");
+                }
+                else
+                {
+                    StartCoroutine("DisableCardNoEquals");
+                }
+            }
         }
     }
 
-    IEnumerator StartRotation()
+    IEnumerator DisableCardEquals()
     {
-        while (true)
-        {
-            if (transform.rotation.y >= 1f)
-            {
-                isShowingPokemon = true;
-                yield return new WaitForSeconds(1f);
-                StartCoroutine("StartRotationBack");
-                yield break;
-            }
-
-            if (transform.rotation.y <= 0.71f && transform.rotation.y >= 0.7f)
-            {
-                hiddenPokemon.gameObject.SetActive(true);
-            }
-            transform.Rotate(Vector3.up * Time.deltaTime * rotationSpeed, Space.Self);
-            yield return new WaitForEndOfFrame();
-        }
+        yield return new WaitForSeconds(animator.runtimeAnimatorController.animationClips[0].length);
+        GameManager.GetInstance().selectedCardOne.GetComponent<Image>().color = Color.gray;
+        GameManager.GetInstance().selectedCardTwo.GetComponent<Image>().color = Color.gray;
+        GameManager.GetInstance().stateSelectCard = StateSelectCard.selectedZero;
+        GameManager.GetInstance().selectedCards = 0;
+        //    GameManager.GetInstance().DisableCardEquals();
     }
 
-    IEnumerator StartRotationBack()
+    IEnumerator DisableCardNoEquals()
     {
-        while (true)
-        {
-            if (transform.rotation.y <= 0f)
-            {
-                isShowingPokemon = false;
-                gameManager.SelectCard(-1);
-                yield break;
-            }
-
-            if (transform.rotation.y <= 0.71f && transform.rotation.y >= 0.7f)
-            {
-                hiddenPokemon.gameObject.SetActive(false);
-            }
-
-            transform.Rotate(Vector3.down * Time.deltaTime * rotationSpeed, Space.Self);
-            yield return new WaitForEndOfFrame();
-        }
+        yield return new WaitForSeconds(animator.runtimeAnimatorController.animationClips[0].length);
+        GameManager.GetInstance().selectedCardOne.GetComponent<CardController>().animator.SetTrigger("flipFront");
+        GameManager.GetInstance().selectedCardTwo.GetComponent<CardController>().animator.SetTrigger("flipFront");
+        yield return new WaitForSeconds(animator.runtimeAnimatorController.animationClips[1].length);
+        GameManager.GetInstance().stateSelectCard = StateSelectCard.selectedZero;
+        GameManager.GetInstance().selectedCards = 0;
+        GameManager.GetInstance().SetCardSelected(null);
     }
+
 }
 
 

@@ -1,22 +1,66 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class GameManager : MonoBehaviour
+public class GameManager
 {
-    public int selectedCards;
-    void Start()
+
+    static GameManager instance;
+    public int selectedCards = 0;
+    public StateSelectCard stateSelectCard = StateSelectCard.selectedZero;
+    public GameObject selectedCardOne;
+    public GameObject selectedCardTwo;
+    public static GameManager GetInstance()
     {
-        selectedCards = 0;
+
+        if (instance == null)
+        {
+            instance = new GameManager();
+            return instance;
+        }
+
+        return instance;
     }
 
-    void Update()
+    public void IncrementSelectedCard(int val)
     {
-
+        if (selectedCards == 2)
+            return;
+        selectedCards += val;
     }
 
-    public void SelectCard(int num)
+    internal void SetCardSelected(GameObject cardSelected)
     {
-        selectedCards += num;
+        switch (stateSelectCard)
+        {
+            case StateSelectCard.selectedZero:
+                selectedCardOne = null;
+                selectedCardTwo = null;
+                break;
+            case StateSelectCard.selectedOne:
+                selectedCardOne = cardSelected;
+                break;
+            case StateSelectCard.selectedTwo:
+                selectedCardTwo = cardSelected;
+                break;
+        }
     }
+
+    public bool AreSamePokemon()
+    {
+        return selectedCardOne.GetComponent<CardController>().PokemonName.Equals(selectedCardTwo.GetComponent<CardController>().PokemonName);
+    }
+
+    public void DisableCardEquals()
+    {
+        selectedCardOne.SetActive(false);
+        selectedCardTwo.SetActive(false);
+    }
+}
+public enum StateSelectCard
+{
+    selectedZero,
+    selectedOne,
+    selectedTwo
 }
